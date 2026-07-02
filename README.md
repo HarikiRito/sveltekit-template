@@ -35,6 +35,9 @@ web/
       todos/
         todos.svelte.ts      # createTodosStore() — PRIMARY showcase
         todos.svelte.test.ts
+        index.svelte          # todos feature UI implementation
+      home/
+        index.svelte          # landing page UI implementation
       counter/
         counter.svelte.ts    # createCounterStore() — secondary pattern
         counter.svelte.test.ts
@@ -84,6 +87,8 @@ To revert to SPA mode, undo those two changes.
 
 ## Adding a Feature Store
 
+A feature can have up to two files: `<name>.svelte.ts` for reactive state (when the feature has state) and `<name>/index.svelte` for the actual UI implementation.
+
 1. Create `src/features/<name>/<name>.svelte.ts` with a factory function:
 
 ```ts
@@ -106,10 +111,23 @@ export function createMyStore(initial = 0) {
 }
 ```
 
-2. Import in a `.svelte` component:
-```ts
-import { createMyStore } from 'src/features/my/my.svelte';
-const store = createMyStore();
+2. Create `src/features/<name>/index.svelte` with the feature's full markup, local UI state, and event-handler wiring:
+```svelte
+<script lang="ts">
+  import { createMyStore } from 'src/features/my/my.svelte';
+  const store = createMyStore();
+</script>
+
+<div>{store.count}</div>
+```
+
+3. Wire the route to only import and render that feature's `index.svelte` — route files (`+page.svelte`) contain no markup/logic/state of their own:
+```svelte
+<script lang="ts">
+  import MyFeature from 'src/features/my/index.svelte';
+</script>
+
+<MyFeature />
 ```
 
 Key rules:
@@ -161,7 +179,7 @@ pnpm test         # run Vitest unit tests
 - **Single alias** — `src` maps to `./src`; use `src/...` for all cross-module imports
 - **No try-catch** — use `neverthrow` `Result`/`ResultAsync` everywhere
 - **No `any`** — prefer `unknown` / `satisfies` in TypeScript
-- **PascalCase** for component files; **camelCase** for non-component files; **kebab-case** for route folders
+- **PascalCase** for component files; **camelCase** for non-component files; **kebab-case** for route folders — exception: `index.svelte`, naming a feature's root implementation component, consistent with the barrel-file `index.ts` convention (e.g. `src/components/ui/*/index.ts`)
 - **`cn()`** for all conditional/merged Tailwind classes
 - Function declarations preferred over arrow const assignments
 - Max ~500 lines per file
