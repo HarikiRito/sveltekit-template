@@ -1,22 +1,27 @@
-import { ok, type Result } from 'src/utils/result';
+import { Effect } from 'effect';
 
 export function createCounterStore(initial = 0) {
 	let count = $state(initial);
 	const doubled = $derived(count * 2);
 
-	function increment(): Result<number, never> {
-		count += 1;
-		return ok(count);
+	function increment(): Effect.Effect<number> {
+		return Effect.sync(() => {
+			count += 1;
+			return count;
+		});
 	}
 
-	function decrement(): Result<number, never> {
-		count -= 1;
-		return ok(count);
+	function decrement(): Effect.Effect<number> {
+		return Effect.sync(() => {
+			count -= 1;
+			return count;
+		});
 	}
 
-	function reset(): Result<void, never> {
-		count = initial;
-		return ok(undefined);
+	function reset(): Effect.Effect<void> {
+		return Effect.sync(() => {
+			count = initial;
+		});
 	}
 
 	return {

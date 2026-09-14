@@ -1,12 +1,23 @@
-import { err, ok, type Result } from 'src/utils/result';
+import { Effect } from 'effect';
+import { EmptyTextError, TodoNotFoundError } from 'src/effect';
+import type { Priority } from './constants';
 
 export interface Todo {
 	id: string;
 	text: string;
 	done: boolean;
+	priority?: Priority;
+	description?: string;
+	assignee?: string;
 }
 
-export type TodosError = 'EMPTY_TEXT';
+export interface NewTodoInput {
+	priority?: Priority;
+	description?: string;
+	assignee?: string;
+}
+
+export type TodoPatch = Partial<Omit<Todo, 'id'>>;
 
 export function createTodosStore(initial: Todo[] = []) {
 	let todos = $state<Todo[]>(initial);
@@ -14,27 +25,43 @@ export function createTodosStore(initial: Todo[] = []) {
 	const remaining = $derived(todos.filter((t) => !t.done).length);
 	const completed = $derived(todos.length - remaining);
 
-	function add(text: string): Result<Todo, TodosError> {
-		const trimmed = text.trim();
-		if (!trimmed) return err('EMPTY_TEXT');
-		const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false };
-		todos = [...todos, todo];
-		return ok(todo);
+	function add(text: string, extra: NewTodoInput = {}): Effect.Effect<Todo, EmptyTextError> {
+		return Effect.gen(function* () {
+			const trimmed = text.trim();
+			if (!trimmed) return yield* new EmptyTextError();
+
+			const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false, ...extra };
+			todos = [...todos, todo];
+			return todo;
+		});
 	}
 
-	function toggle(id: string): Result<void, never> {
-		todos = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-		return ok(undefined);
+	function toggle(id: string): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.gen(function* () {
+			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
+			todos = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+		});
 	}
 
-	function remove(id: string): Result<void, never> {
-		todos = todos.filter((t) => t.id !== id);
-		return ok(undefined);
+	// text/priority/description/assignee only — id and done stay under the store's control
+	function update(id: string, patch: TodoPatch): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.gen(function* () {
+			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
+			todos = todos.map((t) => (t.id === id ? { ...t, ...patch } : t));
+		});
 	}
 
-	function clear(): Result<void, never> {
-		todos = [];
-		return ok(undefined);
+	function remove(id: string): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.gen(function* () {
+			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
+			todos = todos.filter((t) => t.id !== id);
+		});
+	}
+
+	function clear(): Effect.Effect<void> {
+		return Effect.sync(() => {
+			todos = [];
+		});
 	}
 
 	return {
@@ -49,6 +76,7 @@ export function createTodosStore(initial: Todo[] = []) {
 		},
 		add,
 		toggle,
+		update,
 		remove,
 		clear
 	};

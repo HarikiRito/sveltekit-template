@@ -1,30 +1,32 @@
+import { Effect } from 'effect';
+import { StorageParseError, StorageWriteError } from 'src/effect';
 import type { Todo } from 'src/features/todos/todos.svelte';
-import { err, fromThrowable, ok, type Result } from 'src/utils/result';
 
 const KEY = 'todos';
 
-export type StorageError = 'PARSE_ERROR' | 'WRITE_ERROR';
-
-const safeJsonParse = fromThrowable(
-	JSON.parse as (t: string) => unknown,
-	() => 'PARSE_ERROR' as const
-);
-
-const safeSetItem = fromThrowable(
-	(todos: Todo[]) => localStorage.setItem(KEY, JSON.stringify(todos)),
-	() => 'WRITE_ERROR' as const
-);
-
 export const TodosService = {
-	load(): Result<Todo[], StorageError> {
-		const raw = localStorage.getItem(KEY);
-		if (!raw) return ok([]);
-		return safeJsonParse(raw).andThen((parsed) =>
-			Array.isArray(parsed) ? ok(parsed as Todo[]) : err('PARSE_ERROR' as const)
-		);
+	load(): Effect.Effect<Todo[], StorageParseError> {
+		return Effect.gen(function* () {
+			const raw = yield* Effect.try({
+				try: () => localStorage.getItem(KEY),
+				catch: (cause) => new StorageParseError({ cause })
+			});
+			if (!raw) return [];
+
+			const parsed = yield* Effect.try({
+				try: (): unknown => JSON.parse(raw),
+				catch: (cause) => new StorageParseError({ cause })
+			});
+
+			if (!Array.isArray(parsed)) return yield* new StorageParseError({ cause: parsed });
+			return parsed as Todo[];
+		});
 	},
 
-	save(todos: Todo[]): Result<void, StorageError> {
-		return safeSetItem(todos);
+	save(todos: Todo[]): Effect.Effect<void, StorageWriteError> {
+		return Effect.try({
+			try: () => localStorage.setItem(KEY, JSON.stringify(todos)),
+			catch: (cause) => new StorageWriteError({ cause })
+		});
 	}
 };
