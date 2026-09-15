@@ -1,12 +1,20 @@
-import { Effect, Exit } from 'effect';
+import { Cause, Data, Effect, Exit, Option } from 'effect';
 
-/** Runs an effect and returns its value, or `undefined` on any failure (typed, defect, or interrupt). Never throws. */
-export function run<A, E>(effect: Effect.Effect<A, E>): A | undefined {
+export type Result<A, E> =
+	| { readonly ok: true; readonly value: A }
+	| { readonly ok: false; readonly error: E };
+
+export class UnexpectedError extends Data.TaggedError('UnexpectedError')<{
+	readonly cause: unknown;
+}> {}
+
+/** Runs an effect synchronously. Defects/interrupts collapse into `UnexpectedError`. Never throws. */
+export function run<A, E>(effect: Effect.Effect<A, E>): Result<A, E | UnexpectedError> {
 	const exit = Effect.runSyncExit(effect);
-	return Exit.isSuccess(exit) ? exit.value : undefined;
-}
+	if (Exit.isSuccess(exit)) return { ok: true, value: exit.value };
 
-/** Like `run`, but for `Effect<void, E>` — `undefined` is a valid success value, so this reports ok/fail as a boolean instead. */
-export function runOk<E>(effect: Effect.Effect<void, E>): boolean {
-	return Exit.isSuccess(Effect.runSyncExit(effect));
+	const error = Cause.findErrorOption(exit.cause).pipe(
+		Option.getOrElse(() => new UnexpectedError({ cause: exit.cause }))
+	);
+	return { ok: false, error };
 }

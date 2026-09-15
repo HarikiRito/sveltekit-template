@@ -46,38 +46,48 @@ load(): Effect.Effect<Todo[], StorageParseError> {
 
 ## `src/effect/` is a generic, defect-safe runner only
 
-The Svelte layer is the only place effects actually run, via `run`/`runOk` in `src/effect/runtime.ts`. Both are fully generic over the error type — no shared error-union constraint, no knowledge of any app error, no `toast` import:
+The Svelte layer is the only place effects actually run, via `run` in `src/effect/runtime.ts`. `run` returns a Rust-style tagged `Result` instead of throwing or returning `A | undefined` — `void` successes need a real `ok: true` case too, so a bare `A | undefined` can't tell "succeeded with `undefined`" apart from "failed". `run` is fully generic over the error type — no shared error-union constraint, no knowledge of any app error, no `toast` import:
 
 ```ts
-export function run<A, E>(effect: Effect.Effect<A, E>): A | undefined {
-  const exit = Effect.runSyncExit(effect);
-  return Exit.isSuccess(exit) ? exit.value : undefined;
-}
+export type Result<A, E> =
+  | { readonly ok: true; readonly value: A }
+  | { readonly ok: false; readonly error: E };
 
-export function runOk<E>(effect: Effect.Effect<void, E>): boolean {
-  return Exit.isSuccess(Effect.runSyncExit(effect));
+export class UnexpectedError extends Data.TaggedError('UnexpectedError')<{
+  readonly cause: unknown;
+}> {}
+
+export function run<A, E>(effect: Effect.Effect<A, E>): Result<A, E | UnexpectedError> {
+  const exit = Effect.runSyncExit(effect);
+  if (Exit.isSuccess(exit)) return { ok: true, value: exit.value };
+
+  const error = Cause.findErrorOption(exit.cause).pipe(
+    Option.getOrElse(() => new UnexpectedError({ cause: exit.cause }))
+  );
+  return { ok: false, error };
 }
 ```
 
-`Effect.runSyncExit` never throws, even for a defect or interrupt — it always resolves to an `Exit`, so `run`/`runOk` collapse every failure mode (typed, defect, interrupt) into the same `undefined`/`false` signal without needing to inspect the failure at all.
+`Effect.runSyncExit` never throws, even for a defect or interrupt — it always resolves to an `Exit`. A typed failure has a real `E` in its `Cause`, found via `Cause.findErrorOption`; a defect or interrupt has no typed `E`, so `Option.getOrElse` falls back to wrapping the whole `Cause` in `UnexpectedError`. `UnexpectedError` is infrastructure, not a feature error — it belongs in `src/effect/`, not with the feature errors. Either way `run` returns, never throws.
 
 ## Reporting happens at the call site
 
-`run`/`runOk` don't know what a failure means, so they don't report anything — each call site in `src/features/todos/index.svelte` reports its own context-appropriate toast:
+`run` doesn't know what a failure means, so it doesn't report anything — each call site in `src/features/todos/index.svelte` reports its own context-appropriate toast by checking `res.ok`:
 
 ```ts
-const todo = run(store.add(text));
-if (!todo) {
+const res = run(store.add(text));
+if (!res.ok) {
   toast.error('Todo text cannot be empty');
   return;
 }
 text = '';
-toast.success(`Added "${todo.text}"`);
+toast.success(`Added "${res.value.text}"`);
 persist();
 ```
 
 ```ts
-if (!runOk(store.toggle(id))) {
+const res = run(store.toggle(id));
+if (!res.ok) {
   toast.error('Could not update todo');
   return;
 }

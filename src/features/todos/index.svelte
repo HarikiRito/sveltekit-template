@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import { run, runOk } from 'src/effect/runtime';
+	import { run } from 'src/effect/runtime';
 	import { createTodosStore, type Todo } from 'src/features/todos/todos.svelte';
 	import { TodosService } from 'src/services/todos.service';
 	import { Card } from 'src/components/ui/card/index.js';
@@ -22,30 +22,32 @@
 	} from 'src/components/ui/alert-dialog/index.js';
 	import { cn } from 'src/utils.js';
 
-	const initialLoad = run(TodosService.load());
-	if (initialLoad === undefined) toast.error('Could not load saved todos');
-	const store = createTodosStore(initialLoad ?? []);
+	const loadRes = run(TodosService.load());
+	if (!loadRes.ok) toast.error('Could not load saved todos');
+	const store = createTodosStore(loadRes.ok ? loadRes.value : []);
 
 	let text = $state('');
 	let clearOpen = $state(false);
 
 	function persist() {
-		if (!runOk(TodosService.save(store.todos))) toast.error('Failed to save todos to local storage');
+		const res = run(TodosService.save(store.todos));
+		if (!res.ok) toast.error('Failed to save todos to local storage');
 	}
 
 	function handleAdd() {
-		const todo = run(store.add(text));
-		if (!todo) {
+		const res = run(store.add(text));
+		if (!res.ok) {
 			toast.error('Todo text cannot be empty');
 			return;
 		}
 		text = '';
-		toast.success(`Added "${todo.text}"`);
+		toast.success(`Added "${res.value.text}"`);
 		persist();
 	}
 
 	function handleToggle(id: string) {
-		if (!runOk(store.toggle(id))) {
+		const res = run(store.toggle(id));
+		if (!res.ok) {
 			toast.error('Could not update todo');
 			return;
 		}
@@ -55,7 +57,8 @@
 	}
 
 	function handleRemove(id: string) {
-		if (!runOk(store.remove(id))) {
+		const res = run(store.remove(id));
+		if (!res.ok) {
 			toast.error('Could not delete todo');
 			return;
 		}
@@ -64,8 +67,7 @@
 	}
 
 	function confirmClearAll() {
-		// clear() cannot fail: its error type is `never`
-		runOk(store.clear());
+		run(store.clear());
 		toast.success('All todos cleared');
 		persist();
 	}
