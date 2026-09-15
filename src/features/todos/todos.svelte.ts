@@ -1,23 +1,11 @@
 import { Effect } from 'effect';
 import { EmptyTextError, TodoNotFoundError } from 'src/effect';
-import type { Priority } from './constants';
 
 export interface Todo {
 	id: string;
 	text: string;
 	done: boolean;
-	priority?: Priority;
-	description?: string;
-	assignee?: string;
 }
-
-export interface NewTodoInput {
-	priority?: Priority;
-	description?: string;
-	assignee?: string;
-}
-
-export type TodoPatch = Partial<Omit<Todo, 'id'>>;
 
 export function createTodosStore(initial: Todo[] = []) {
 	let todos = $state<Todo[]>(initial);
@@ -25,12 +13,12 @@ export function createTodosStore(initial: Todo[] = []) {
 	const remaining = $derived(todos.filter((t) => !t.done).length);
 	const completed = $derived(todos.length - remaining);
 
-	function add(text: string, extra: NewTodoInput = {}): Effect.Effect<Todo, EmptyTextError> {
+	function add(text: string): Effect.Effect<Todo, EmptyTextError> {
 		return Effect.gen(function* () {
 			const trimmed = text.trim();
 			if (!trimmed) return yield* new EmptyTextError();
 
-			const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false, ...extra };
+			const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false };
 			todos = [...todos, todo];
 			return todo;
 		});
@@ -40,14 +28,6 @@ export function createTodosStore(initial: Todo[] = []) {
 		return Effect.gen(function* () {
 			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
 			todos = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-		});
-	}
-
-	// text/priority/description/assignee only — id and done stay under the store's control
-	function update(id: string, patch: TodoPatch): Effect.Effect<void, TodoNotFoundError> {
-		return Effect.gen(function* () {
-			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
-			todos = todos.map((t) => (t.id === id ? { ...t, ...patch } : t));
 		});
 	}
 
@@ -76,7 +56,6 @@ export function createTodosStore(initial: Todo[] = []) {
 		},
 		add,
 		toggle,
-		update,
 		remove,
 		clear
 	};

@@ -80,36 +80,6 @@ describe('createTodosStore', () => {
 		expect(store.todos.length).toBe(1);
 	});
 
-	it('update() applies a patch to the matching todo', () => {
-		const store = createTodosStore();
-		const todo = Effect.runSync(store.add('Buy milk', { priority: 'low' }));
-		const exit = Effect.runSyncExit(store.update(todo.id, { text: 'Buy oat milk' }));
-		expect(Exit.isSuccess(exit)).toBe(true);
-		expect(store.todos[0].text).toBe('Buy oat milk');
-	});
-
-	it('update() fails with TodoNotFoundError for an unknown id', () => {
-		const store = createTodosStore();
-		const exit = Effect.runSyncExit(store.update('missing-id', { text: 'x' }));
-		const error = failureOf(exit);
-		expect(error._tag).toBe('TodoNotFoundError');
-		expect(error.id).toBe('missing-id');
-	});
-
-	it('update() with a partial patch leaves other fields intact', () => {
-		const store = createTodosStore();
-		const todo = Effect.runSync(
-			store.add('Buy milk', { priority: 'low', description: 'from the store', assignee: 'Al' })
-		);
-		Effect.runSync(store.update(todo.id, { priority: 'high' }));
-		const updated = store.todos[0];
-		expect(updated.priority).toBe('high');
-		expect(updated.text).toBe('Buy milk');
-		expect(updated.description).toBe('from the store');
-		expect(updated.assignee).toBe('Al');
-		expect(updated.done).toBe(false);
-	});
-
 	it('clear() removes all todos and cannot fail', () => {
 		const store = createTodosStore();
 		Effect.runSync(store.add('Buy milk'));
