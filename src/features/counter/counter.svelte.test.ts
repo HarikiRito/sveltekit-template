@@ -1,3 +1,4 @@
+import { Effect } from 'effect';
 import { describe, expect, it } from 'vitest';
 import { createCounterStore } from './counter.svelte';
 
@@ -14,50 +15,43 @@ describe('createCounterStore', () => {
 		expect(store.doubled).toBe(10);
 	});
 
-	it('increment() increases count and returns ok(count)', () => {
+	it('increment() increases count and succeeds with the new count', () => {
 		const store = createCounterStore();
-		const result = store.increment();
-		expect(result.isOk()).toBe(true);
+		const value = Effect.runSync(store.increment());
+		expect(value).toBe(1);
 		expect(store.count).toBe(1);
 		expect(store.doubled).toBe(2);
-		if (result.isOk()) {
-			expect(result.value).toBe(1);
-		}
 	});
 
-	it('decrement() decreases count and returns ok(count)', () => {
+	it('decrement() decreases count and succeeds with the new count', () => {
 		const store = createCounterStore();
-		store.increment();
-		const result = store.decrement();
-		expect(result.isOk()).toBe(true);
+		Effect.runSync(store.increment());
+		const value = Effect.runSync(store.decrement());
+		expect(value).toBe(0);
 		expect(store.count).toBe(0);
 		expect(store.doubled).toBe(0);
-		if (result.isOk()) {
-			expect(result.value).toBe(0);
-		}
 	});
 
-	it('reset() returns to initial value and returns ok(void)', () => {
+	it('reset() returns to initial value', () => {
 		const store = createCounterStore(3);
-		store.increment();
-		store.increment();
+		Effect.runSync(store.increment());
+		Effect.runSync(store.increment());
 		expect(store.count).toBe(5);
-		const result = store.reset();
-		expect(result.isOk()).toBe(true);
+		Effect.runSync(store.reset());
 		expect(store.count).toBe(3);
 		expect(store.doubled).toBe(6);
 	});
 
 	it('doubled always equals count * 2', () => {
 		const store = createCounterStore();
-		store.increment();
-		store.increment();
+		Effect.runSync(store.increment());
+		Effect.runSync(store.increment());
 		expect(store.count).toBe(2);
 		expect(store.doubled).toBe(4);
-		store.decrement();
+		Effect.runSync(store.decrement());
 		expect(store.count).toBe(1);
 		expect(store.doubled).toBe(2);
-		store.reset();
+		Effect.runSync(store.reset());
 		expect(store.count).toBe(0);
 		expect(store.doubled).toBe(0);
 	});

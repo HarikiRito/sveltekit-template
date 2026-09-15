@@ -1,105 +1,145 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import { createTodosStore } from 'src/features/todos/todos.svelte';
+	import { run } from 'src/effect/runtime';
+	import { TodosStore, type Todo } from 'src/features/todos/todos.svelte';
 	import { TodosService } from 'src/services/todos.service';
-	import AppButton from 'src/components/ui/button/AppButton.svelte';
-	import AppCard from 'src/components/ui/card/AppCard.svelte';
-	import AppInput from 'src/components/ui/input/AppInput.svelte';
-	import { cn } from 'src/utils/cn';
+	import { Card } from 'src/components/ui/card/index.js';
+	import { Badge } from 'src/components/ui/badge/index.js';
+	import { Separator } from 'src/components/ui/separator/index.js';
+	import { Label } from 'src/components/ui/label/index.js';
+	import { Input } from 'src/components/ui/input/index.js';
+	import { Button } from 'src/components/ui/button/index.js';
+	import { Checkbox } from 'src/components/ui/checkbox/index.js';
+	import {
+		AlertDialog,
+		AlertDialogAction,
+		AlertDialogCancel,
+		AlertDialogContent,
+		AlertDialogDescription,
+		AlertDialogFooter,
+		AlertDialogHeader,
+		AlertDialogTitle
+	} from 'src/components/ui/alert-dialog/index.js';
+	import { cn } from 'src/utils.js';
 
-	const initialTodos = TodosService.load().unwrapOr([]);
-	const store = createTodosStore(initialTodos);
+	onMount(() => {
+		const res = run(TodosService.load());
+		if (!res.ok) toast.error('Could not load saved todos');
+		TodosStore.init(res.ok ? res.value : []);
+		return () => TodosStore.reset();
+	});
 
-	let inputText = $state('');
-
-	function saveOrToast() {
-		TodosService.save(store.todos).mapErr(() => toast.error('Failed to save todos'));
+	function persist() {
+		const res = run(TodosService.save(TodosStore.todos));
+		if (!res.ok) toast.error('Failed to save todos to local storage');
 	}
 
 	function handleAdd() {
-		const result = store.add(inputText);
-		result.match(
-			(_todo) => {
-				inputText = '';
-				saveOrToast();
-			},
-			(e) => {
-				if (e === 'EMPTY_TEXT') toast.error('Todo text cannot be empty');
-			}
-		);
+		const res = run(TodosStore.add(TodosStore.text));
+		if (!res.ok) {
+			toast.error('Todo text cannot be empty');
+			return;
+		}
+		TodosStore.text = '';
+		toast.success(`Added "${res.value.text}"`);
+		persist();
 	}
 
 	function handleToggle(id: string) {
-		store.toggle(id).map(() => {
-			saveOrToast();
-		});
+		const res = run(TodosStore.toggle(id));
+		if (!res.ok) {
+			toast.error('Could not update todo');
+			return;
+		}
+		const todo = TodosStore.todos.find((t: Todo) => t.id === id);
+		toast.success(todo?.done ? 'Marked as done' : 'Marked as active');
+		persist();
 	}
 
 	function handleRemove(id: string) {
-		store.remove(id).map(() => {
-			saveOrToast();
-		});
+		const res = run(TodosStore.remove(id));
+		if (!res.ok) {
+			toast.error('Could not delete todo');
+			return;
+		}
+		toast.success('Todo deleted');
+		persist();
 	}
 
-	function handleClear() {
-		store.clear().map(() => {
-			saveOrToast();
-		});
-	}
-
-	function handleKeydown(event: KeyboardEvent) {
-		if (event.key === 'Enter') handleAdd();
+	function confirmClearAll() {
+		run(TodosStore.clear());
+		toast.success('All todos cleared');
+		persist();
 	}
 </script>
 
-<div class="flex flex-col gap-6">
-	<div>
-		<h1 class="text-3xl font-bold">Todos</h1>
-		<p class="text-muted-foreground mt-1 text-sm">
-			{store.remaining} remaining · {store.completed} completed
-		</p>
+<Card class="mx-auto flex w-full max-w-lg flex-col gap-4 p-6">
+	<div class="flex items-center justify-between gap-3">
+		<h1 class="text-2xl font-bold">Todos</h1>
+		<div class="flex items-center gap-2">
+			<Badge variant="outline">{TodosStore.remaining} remaining</Badge>
+			<Badge variant="secondary">{TodosStore.completed} completed</Badge>
+		</div>
 	</div>
 
-	<AppCard>
-		<div class="flex gap-2">
-			<AppInput
-				id="todo-input"
-				placeholder="What needs to be done?"
-				bind:value={inputText}
-				onkeydown={handleKeydown}
-				class="flex-1"
+	<div class="flex items-end gap-2">
+		<div class="flex flex-1 flex-col gap-1.5">
+			<Label for="new-todo">New todo</Label>
+			<Input
+				id="new-todo"
+				placeholder="What needs doing?"
+				bind:value={TodosStore.text}
+				onkeydown={(e) => e.key === 'Enter' && handleAdd()}
 			/>
-			<AppButton onclick={handleAdd}>Add</AppButton>
 		</div>
-	</AppCard>
+		<Button onclick={handleAdd}>Add</Button>
+	</div>
 
-	{#if store.todos.length > 0}
-		<AppCard>
-			<ul class="divide-y">
-				{#each store.todos as todo (todo.id)}
-					<li class="flex items-center gap-3 py-3">
-						<input
-							type="checkbox"
-							checked={todo.done}
-							onchange={() => handleToggle(todo.id)}
-							class="h-4 w-4 rounded border-gray-300"
-							aria-label={`Mark "${todo.text}" as ${todo.done ? 'incomplete' : 'complete'}`}
-						/>
-						<span class={cn('flex-1 text-sm', todo.done && 'text-muted-foreground line-through')}>
-							{todo.text}
-						</span>
-						<AppButton variant="ghost" onclick={() => handleRemove(todo.id)} class="h-8 px-2 text-xs">
-							Remove
-						</AppButton>
-					</li>
-				{/each}
-			</ul>
-		</AppCard>
+	<Separator />
+
+	{#if TodosStore.todos.length === 0}
+		<p class="text-muted-foreground text-sm">No todos yet. Add one above.</p>
+	{:else}
+		<ul class="flex flex-col gap-2">
+			{#each TodosStore.todos as todo (todo.id)}
+				<li class="flex items-center gap-3">
+					<Checkbox
+						bind:checked={() => todo.done, () => handleToggle(todo.id)}
+						aria-label={todo.done ? 'Mark as active' : 'Mark as done'}
+					/>
+					<span class={cn('flex-1 text-sm', todo.done && 'text-muted-foreground line-through')}>
+						{todo.text}
+					</span>
+					<Button
+						variant="ghost"
+						size="sm"
+						onclick={() => handleRemove(todo.id)}
+						aria-label={`Delete "${todo.text}"`}
+					>
+						Delete
+					</Button>
+				</li>
+			{/each}
+		</ul>
+
+		<Separator />
 
 		<div class="flex justify-end">
-			<AppButton variant="outline" onclick={handleClear}>Clear all</AppButton>
+			<Button variant="outline" onclick={() => (TodosStore.clearOpen = true)}>Clear all</Button>
 		</div>
-	{:else}
-		<p class="text-muted-foreground text-center text-sm">No todos yet. Add one above!</p>
 	{/if}
-</div>
+</Card>
+
+<AlertDialog bind:open={TodosStore.clearOpen}>
+	<AlertDialogContent>
+		<AlertDialogHeader>
+			<AlertDialogTitle>Clear all todos?</AlertDialogTitle>
+			<AlertDialogDescription>This removes every task and can't be undone.</AlertDialogDescription>
+		</AlertDialogHeader>
+		<AlertDialogFooter>
+			<AlertDialogCancel>Cancel</AlertDialogCancel>
+			<AlertDialogAction variant="destructive" onclick={confirmClearAll}>Clear all</AlertDialogAction>
+		</AlertDialogFooter>
+	</AlertDialogContent>
+</AlertDialog>

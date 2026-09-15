@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { Input } from 'src/components/ui/input/index.js';
 	import { Label } from 'src/components/ui/label/index.js';
-	import { cn } from 'src/utils/cn';
+	import { cn } from 'src/utils.js';
 
 	// let required (not const): Svelte 5 $bindable() demands a mutable binding
 	let {

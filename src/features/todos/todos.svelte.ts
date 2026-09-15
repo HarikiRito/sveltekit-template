@@ -1,4 +1,10 @@
-import { err, ok, type Result } from 'src/utils/result';
+import { Data, Effect } from 'effect';
+
+export class EmptyTextError extends Data.TaggedError('EmptyTextError') {}
+
+export class TodoNotFoundError extends Data.TaggedError('TodoNotFoundError')<{
+	readonly id: string;
+}> {}
 
 export interface Todo {
 	id: string;
@@ -6,50 +12,56 @@ export interface Todo {
 	done: boolean;
 }
 
-export type TodosError = 'EMPTY_TEXT';
+class Store {
+	todos = $state<Todo[]>([]);
+	text = $state('');
+	clearOpen = $state(false);
 
-export function createTodosStore(initial: Todo[] = []) {
-	let todos = $state<Todo[]>(initial);
+	remaining = $derived(this.todos.filter((t) => !t.done).length);
+	completed = $derived(this.todos.length - this.remaining);
 
-	const remaining = $derived(todos.filter((t) => !t.done).length);
-	const completed = $derived(todos.length - remaining);
-
-	function add(text: string): Result<Todo, TodosError> {
-		const trimmed = text.trim();
-		if (!trimmed) return err('EMPTY_TEXT');
-		const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false };
-		todos = [...todos, todo];
-		return ok(todo);
+	init(todos: Todo[]): void {
+		this.todos = todos;
 	}
 
-	function toggle(id: string): Result<void, never> {
-		todos = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
-		return ok(undefined);
+	reset(): void {
+		this.todos = [];
+		this.text = '';
+		this.clearOpen = false;
 	}
 
-	function remove(id: string): Result<void, never> {
-		todos = todos.filter((t) => t.id !== id);
-		return ok(undefined);
+	add(text: string): Effect.Effect<Todo, EmptyTextError> {
+		return Effect.suspend(() => {
+			const trimmed = text.trim();
+			if (!trimmed) return Effect.fail(new EmptyTextError());
+
+			const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false };
+			this.todos = [...this.todos, todo];
+			return Effect.succeed(todo);
+		});
 	}
 
-	function clear(): Result<void, never> {
-		todos = [];
-		return ok(undefined);
+	toggle(id: string): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.suspend(() => {
+			if (!this.todos.some((t) => t.id === id)) return Effect.fail(new TodoNotFoundError({ id }));
+			this.todos = this.todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+			return Effect.void;
+		});
 	}
 
-	return {
-		get todos() {
-			return todos;
-		},
-		get remaining() {
-			return remaining;
-		},
-		get completed() {
-			return completed;
-		},
-		add,
-		toggle,
-		remove,
-		clear
-	};
+	remove(id: string): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.suspend(() => {
+			if (!this.todos.some((t) => t.id === id)) return Effect.fail(new TodoNotFoundError({ id }));
+			this.todos = this.todos.filter((t) => t.id !== id);
+			return Effect.void;
+		});
+	}
+
+	clear(): Effect.Effect<void> {
+		return Effect.sync(() => {
+			this.todos = [];
+		});
+	}
 }
+
+export const TodosStore = new Store();

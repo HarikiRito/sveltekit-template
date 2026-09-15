@@ -7,4 +7,4 @@ export type {
 	WithoutChildren,
 	WithoutChildrenOrChild
 } from 'bits-ui';
-export { cn } from 'src/utils/cn';
+export { cn } from 'cn';

@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { Card, CardContent, CardHeader, CardTitle, CardDescription } from 'src/components/ui/card/index.js';
-	import { cn } from 'src/utils/cn';
+	import { cn } from 'src/utils.js';
 	import type { HTMLAttributes } from 'svelte/elements';
 
 	const { class: className, title, description, children, ...rest }: HTMLAttributes<HTMLDivElement> & {
