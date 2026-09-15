@@ -33,7 +33,7 @@ src/
       AppSonner.svelte
   features/
     todos/
-      todos.svelte.ts     # createTodosStore()
+      todos.svelte.ts     # TodosStore singleton (module-private Store class)
       todos.svelte.test.ts
       index.svelte        # todos feature UI implementation
     home/

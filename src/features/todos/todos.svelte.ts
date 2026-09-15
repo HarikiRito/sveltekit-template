@@ -12,56 +12,56 @@ export interface Todo {
 	done: boolean;
 }
 
-export function createTodosStore(initial: Todo[] = []) {
-	let todos = $state<Todo[]>(initial);
+class Store {
+	todos = $state<Todo[]>([]);
+	text = $state('');
+	clearOpen = $state(false);
 
-	const remaining = $derived(todos.filter((t) => !t.done).length);
-	const completed = $derived(todos.length - remaining);
+	remaining = $derived(this.todos.filter((t) => !t.done).length);
+	completed = $derived(this.todos.length - this.remaining);
 
-	function add(text: string): Effect.Effect<Todo, EmptyTextError> {
-		return Effect.gen(function* () {
+	init(todos: Todo[]): void {
+		this.todos = todos;
+	}
+
+	reset(): void {
+		this.todos = [];
+		this.text = '';
+		this.clearOpen = false;
+	}
+
+	add(text: string): Effect.Effect<Todo, EmptyTextError> {
+		return Effect.suspend(() => {
 			const trimmed = text.trim();
-			if (!trimmed) return yield* new EmptyTextError();
+			if (!trimmed) return Effect.fail(new EmptyTextError());
 
 			const todo: Todo = { id: crypto.randomUUID(), text: trimmed, done: false };
-			todos = [...todos, todo];
-			return todo;
+			this.todos = [...this.todos, todo];
+			return Effect.succeed(todo);
 		});
 	}
 
-	function toggle(id: string): Effect.Effect<void, TodoNotFoundError> {
-		return Effect.gen(function* () {
-			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
-			todos = todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+	toggle(id: string): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.suspend(() => {
+			if (!this.todos.some((t) => t.id === id)) return Effect.fail(new TodoNotFoundError({ id }));
+			this.todos = this.todos.map((t) => (t.id === id ? { ...t, done: !t.done } : t));
+			return Effect.void;
 		});
 	}
 
-	function remove(id: string): Effect.Effect<void, TodoNotFoundError> {
-		return Effect.gen(function* () {
-			if (!todos.some((t) => t.id === id)) return yield* new TodoNotFoundError({ id });
-			todos = todos.filter((t) => t.id !== id);
+	remove(id: string): Effect.Effect<void, TodoNotFoundError> {
+		return Effect.suspend(() => {
+			if (!this.todos.some((t) => t.id === id)) return Effect.fail(new TodoNotFoundError({ id }));
+			this.todos = this.todos.filter((t) => t.id !== id);
+			return Effect.void;
 		});
 	}
 
-	function clear(): Effect.Effect<void> {
+	clear(): Effect.Effect<void> {
 		return Effect.sync(() => {
-			todos = [];
+			this.todos = [];
 		});
 	}
-
-	return {
-		get todos() {
-			return todos;
-		},
-		get remaining() {
-			return remaining;
-		},
-		get completed() {
-			return completed;
-		},
-		add,
-		toggle,
-		remove,
-		clear
-	};
 }
+
+export const TodosStore = new Store();

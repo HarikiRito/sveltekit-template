@@ -36,7 +36,7 @@ load(): Effect.Effect<Todo[], StorageParseError> {
 }
 ```
 
-`src/features/todos/todos.svelte.ts` defines `EmptyTextError`/`TodoNotFoundError` next to `createTodosStore()`, whose methods return `Effect` values instead of throwing or returning a raw result:
+`src/features/todos/todos.svelte.ts` defines `EmptyTextError`/`TodoNotFoundError` next to the module-private `Store` class (exported as the singleton instance `TodosStore`), whose methods return `Effect` values instead of throwing or returning a raw result:
 
 - `add(text)` → `Effect.Effect<Todo, EmptyTextError>`
 - `toggle(id)` / `remove(id)` → `Effect.Effect<void, TodoNotFoundError>`

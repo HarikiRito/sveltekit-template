@@ -1,7 +1,8 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
 	import { run } from 'src/effect/runtime';
-	import { createTodosStore, type Todo } from 'src/features/todos/todos.svelte';
+	import { TodosStore, type Todo } from 'src/features/todos/todos.svelte';
 	import { TodosService } from 'src/services/todos.service';
 	import { Card } from 'src/components/ui/card/index.js';
 	import { Badge } from 'src/components/ui/badge/index.js';
@@ -22,42 +23,42 @@
 	} from 'src/components/ui/alert-dialog/index.js';
 	import { cn } from 'src/utils.js';
 
-	const loadRes = run(TodosService.load());
-	if (!loadRes.ok) toast.error('Could not load saved todos');
-	const store = createTodosStore(loadRes.ok ? loadRes.value : []);
-
-	let text = $state('');
-	let clearOpen = $state(false);
+	onMount(() => {
+		const res = run(TodosService.load());
+		if (!res.ok) toast.error('Could not load saved todos');
+		TodosStore.init(res.ok ? res.value : []);
+		return () => TodosStore.reset();
+	});
 
 	function persist() {
-		const res = run(TodosService.save(store.todos));
+		const res = run(TodosService.save(TodosStore.todos));
 		if (!res.ok) toast.error('Failed to save todos to local storage');
 	}
 
 	function handleAdd() {
-		const res = run(store.add(text));
+		const res = run(TodosStore.add(TodosStore.text));
 		if (!res.ok) {
 			toast.error('Todo text cannot be empty');
 			return;
 		}
-		text = '';
+		TodosStore.text = '';
 		toast.success(`Added "${res.value.text}"`);
 		persist();
 	}
 
 	function handleToggle(id: string) {
-		const res = run(store.toggle(id));
+		const res = run(TodosStore.toggle(id));
 		if (!res.ok) {
 			toast.error('Could not update todo');
 			return;
 		}
-		const todo = store.todos.find((t: Todo) => t.id === id);
+		const todo = TodosStore.todos.find((t: Todo) => t.id === id);
 		toast.success(todo?.done ? 'Marked as done' : 'Marked as active');
 		persist();
 	}
 
 	function handleRemove(id: string) {
-		const res = run(store.remove(id));
+		const res = run(TodosStore.remove(id));
 		if (!res.ok) {
 			toast.error('Could not delete todo');
 			return;
@@ -67,7 +68,7 @@
 	}
 
 	function confirmClearAll() {
-		run(store.clear());
+		run(TodosStore.clear());
 		toast.success('All todos cleared');
 		persist();
 	}
@@ -77,8 +78,8 @@
 	<div class="flex items-center justify-between gap-3">
 		<h1 class="text-2xl font-bold">Todos</h1>
 		<div class="flex items-center gap-2">
-			<Badge variant="outline">{store.remaining} remaining</Badge>
-			<Badge variant="secondary">{store.completed} completed</Badge>
+			<Badge variant="outline">{TodosStore.remaining} remaining</Badge>
+			<Badge variant="secondary">{TodosStore.completed} completed</Badge>
 		</div>
 	</div>
 
@@ -88,7 +89,7 @@
 			<Input
 				id="new-todo"
 				placeholder="What needs doing?"
-				bind:value={text}
+				bind:value={TodosStore.text}
 				onkeydown={(e) => e.key === 'Enter' && handleAdd()}
 			/>
 		</div>
@@ -97,11 +98,11 @@
 
 	<Separator />
 
-	{#if store.todos.length === 0}
+	{#if TodosStore.todos.length === 0}
 		<p class="text-muted-foreground text-sm">No todos yet. Add one above.</p>
 	{:else}
 		<ul class="flex flex-col gap-2">
-			{#each store.todos as todo (todo.id)}
+			{#each TodosStore.todos as todo (todo.id)}
 				<li class="flex items-center gap-3">
 					<Checkbox
 						bind:checked={() => todo.done, () => handleToggle(todo.id)}
@@ -125,12 +126,12 @@
 		<Separator />
 
 		<div class="flex justify-end">
-			<Button variant="outline" onclick={() => (clearOpen = true)}>Clear all</Button>
+			<Button variant="outline" onclick={() => (TodosStore.clearOpen = true)}>Clear all</Button>
 		</div>
 	{/if}
 </Card>
 
-<AlertDialog bind:open={clearOpen}>
+<AlertDialog bind:open={TodosStore.clearOpen}>
 	<AlertDialogContent>
 		<AlertDialogHeader>
 			<AlertDialogTitle>Clear all todos?</AlertDialogTitle>
