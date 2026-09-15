@@ -39,37 +39,64 @@ load(): Effect.Effect<Todo[], StorageParseError> {
 
 ## UI executes at the edge
 
-The Svelte layer is the only place effects actually run, via the helpers in `src/effect/runtime.ts`:
+The Svelte layer is the only place effects actually run, via `run`/`runOk` in `src/effect/runtime.ts`. A component calls a store/service method and passes the returned effect straight to one of these — no per-call-site success/failure branching:
 
 ```ts
-export function runSyncExit<A, E>(effect: Effect.Effect<A, E>): Exit.Exit<A, E> {
-  return Effect.runSyncExit(effect);
+function toAppError<E extends AppError>(cause: Cause.Cause<E>): AppError {
+  // findErrorOption is None for a defect/interrupt (no typed error in the cause) — never throw, synthesize instead.
+  return Option.getOrElse(Cause.findErrorOption(cause), () => new UnexpectedError({ cause }));
 }
 
-export function matchExit<A, E, R>(
-  exit: Exit.Exit<A, E>,
-  handlers: { onSuccess: (value: A) => R; onFailure: (error: E) => R }
-): R {
-  return Exit.match(exit, {
-    onSuccess: handlers.onSuccess,
-    onFailure: (cause) => handlers.onFailure(Option.getOrThrow(Cause.findErrorOption(cause)))
-  });
+export function run<A, E extends AppError>(effect: Effect.Effect<A, E>): A | undefined {
+  const exit = Effect.runSyncExit(effect);
+  if (Exit.isSuccess(exit)) return exit.value;
+  toast.error(messageFor(toAppError(exit.cause)));
+  return undefined;
 }
 ```
 
-A component calls a store/service method, runs the returned effect with `runSyncExit`, then branches with `matchExit` — `onFailure` receives the narrowed tagged error (by `._tag`), no `try`/`catch` needed:
+`run` returns the success value, or `undefined` after reporting a toast on failure — including defects and interrupts, which it collapses into `UnexpectedError` rather than ever throwing. Call sites read as a single line plus a guard:
 
 ```ts
-matchExit(runSyncExit(store.add(inputText)), {
-  onSuccess: () => (inputText = ''),
-  onFailure: (error) => {
-    if (error._tag === 'EmptyTextError') toast.error('Todo text cannot be empty');
+const todo = run(store.add(addText, { priority: addPriority as Priority }));
+if (!todo) return;
+addText = '';
+toast.success(`Added "${todo.text}"`);
+persist();
+```
+
+`Effect<void, E>` is ambiguous under `run` — `undefined` is both "succeeded with no value" and "failed". `runOk` is the `void`-returning variant: it reports the same way but returns a `boolean`, so `toggle`/`remove`/`update` call sites guard on it directly:
+
+```ts
+if (!runOk(store.toggle(id))) return;
+const todo = store.todos.find((t) => t.id === id);
+toast.success(todo?.done ? 'Marked as done' : 'Marked as active');
+persist();
+```
+
+Failure messages live in one place, `messageFor`, an exhaustive switch on `._tag` (ESLint's `switch-exhaustiveness-check` fails the build if a new tag isn't mapped):
+
+```ts
+export function messageFor(error: AppError): string {
+  switch (error._tag) {
+    case 'EmptyTextError':
+      return 'Todo text cannot be empty';
+    case 'StorageParseError':
+      return 'Could not load saved todos';
+    case 'StorageWriteError':
+      return 'Failed to save todos to local storage';
+    case 'TodoNotFoundError':
+      return `Todo not found (${error.id})`;
+    case 'UnexpectedError':
+      return 'Something unexpected went wrong';
   }
-});
+}
 ```
+
+Success toasts stay at the call site (they're context-specific — "Added", "Marked as done", "Todo deleted"); failure toasts always come from `messageFor` via `run`/`runOk`, never written inline.
 
 ## Adding a new error type
 
-1. Add a `Data.TaggedError` class to `src/effect/errors.ts`, with a payload field for any context the caller needs (e.g. `{ id: string }`)
+1. Add a `Data.TaggedError` class to `src/effect/errors.ts` and add it to the `AppError` union, with a payload field for any context the caller needs (e.g. `{ id: string }`)
 2. Return it from the failing branch of the service/store method's `Effect.Effect<A, E>` signature
-3. Handle it in the UI's `matchExit` `onFailure`, switching on `._tag`
+3. Add a case to `messageFor` in `src/effect/runtime.ts` — the exhaustiveness check won't let you skip this

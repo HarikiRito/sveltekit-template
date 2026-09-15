@@ -4,7 +4,9 @@ import { createTodosStore } from './todos.svelte';
 
 function failureOf<A, E>(exit: Exit.Exit<A, E>): E {
 	if (!Exit.isFailure(exit)) throw new Error('expected a failed Exit');
-	return Option.getOrThrow(Cause.findErrorOption(exit.cause));
+	const error = Cause.findErrorOption(exit.cause);
+	if (Option.isNone(error)) throw new Error('expected a typed error, got a defect/interrupt');
+	return error.value;
 }
 
 describe('createTodosStore', () => {

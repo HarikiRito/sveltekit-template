@@ -4,7 +4,7 @@
 	import ListIcon from '@lucide/svelte/icons/list';
 	import TableIcon from '@lucide/svelte/icons/table';
 	import ArrowUpDownIcon from '@lucide/svelte/icons/arrow-up-down';
-	import { matchExit, runSyncExit } from 'src/effect';
+	import { run, runOk } from 'src/effect';
 	import { createTodosStore, type Todo, type TodoPatch } from 'src/features/todos/todos.svelte';
 	import { TodosService } from 'src/services/todos.service';
 	import {
@@ -34,13 +34,7 @@
 	import TodoDetailSheet from 'src/features/todos/TodoDetailSheet.svelte';
 	import TodoDeleteAlert from 'src/features/todos/TodoDeleteAlert.svelte';
 
-	const initialTodos = matchExit(runSyncExit(TodosService.load()), {
-		onSuccess: (loaded) => loaded,
-		onFailure: (error) => {
-			toast.error(`Could not load saved todos (${error._tag})`);
-			return [];
-		}
-	});
+	const initialTodos = run(TodosService.load()) ?? [];
 
 	const store = createTodosStore(initialTodos);
 
@@ -86,50 +80,28 @@
 	const tableTodos = $derived(showCompleted ? sortedTodos : activeTodos);
 
 	function persist() {
-		matchExit(runSyncExit(TodosService.save(store.todos)), {
-			onSuccess: () => undefined,
-			onFailure: () => {
-				toast.error('Failed to save todos to local storage');
-			}
-		});
+		run(TodosService.save(store.todos));
 	}
 
 	function handleAdd() {
-		matchExit(runSyncExit(store.add(addText, { priority: addPriority as Priority })), {
-			onSuccess: (todo) => {
-				addText = '';
-				toast.success(`Added "${todo.text}"`);
-				persist();
-			},
-			onFailure: () => {
-				toast.error('Todo text cannot be empty');
-			}
-		});
+		const todo = run(store.add(addText, { priority: addPriority as Priority }));
+		if (!todo) return;
+		addText = '';
+		toast.success(`Added "${todo.text}"`);
+		persist();
 	}
 
 	function handleToggle(id: string) {
-		matchExit(runSyncExit(store.toggle(id)), {
-			onSuccess: () => {
-				const todo = store.todos.find((t) => t.id === id);
-				toast.success(todo?.done ? 'Marked as done' : 'Marked as active');
-				persist();
-			},
-			onFailure: (error) => {
-				toast.error(`Todo not found (${error.id})`);
-			}
-		});
+		if (!runOk(store.toggle(id))) return;
+		const todo = store.todos.find((t) => t.id === id);
+		toast.success(todo?.done ? 'Marked as done' : 'Marked as active');
+		persist();
 	}
 
 	function handleUpdate(id: string, patch: TodoPatch) {
-		matchExit(runSyncExit(store.update(id, patch)), {
-			onSuccess: () => {
-				toast.success('Todo updated');
-				persist();
-			},
-			onFailure: (error) => {
-				toast.error(`Todo not found (${error.id})`);
-			}
-		});
+		if (!runOk(store.update(id, patch))) return;
+		toast.success('Todo updated');
+		persist();
 	}
 
 	function openView(todo: Todo) {
@@ -149,27 +121,18 @@
 
 	function confirmDelete() {
 		if (!deleteTarget) return;
-		matchExit(runSyncExit(store.remove(deleteTarget.id)), {
-			onSuccess: () => {
-				toast.success('Todo deleted');
-				persist();
-			},
-			onFailure: (error) => {
-				toast.error(`Todo not found (${error.id})`);
-			}
-		});
+		if (runOk(store.remove(deleteTarget.id))) {
+			toast.success('Todo deleted');
+			persist();
+		}
 		deleteTarget = null;
 	}
 
 	function confirmClearAll() {
-		matchExit(runSyncExit(store.clear()), {
-			onSuccess: () => {
-				toast.success('All todos cleared');
-				persist();
-			},
-			// clear() cannot fail: its error type is `never`
-			onFailure: () => undefined
-		});
+		// clear() cannot fail: its error type is `never`
+		runOk(store.clear());
+		toast.success('All todos cleared');
+		persist();
 	}
 
 </script>
