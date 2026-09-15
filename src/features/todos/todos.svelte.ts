@@ -1,5 +1,10 @@
-import { Effect } from 'effect';
-import { EmptyTextError, TodoNotFoundError } from 'src/effect';
+import { Data, Effect } from 'effect';
+
+export class EmptyTextError extends Data.TaggedError('EmptyTextError') {}
+
+export class TodoNotFoundError extends Data.TaggedError('TodoNotFoundError')<{
+	readonly id: string;
+}> {}
 
 export interface Todo {
 	id: string;

@@ -1,6 +1,13 @@
-import { Effect } from 'effect';
-import { StorageParseError, StorageWriteError } from 'src/effect';
+import { Data, Effect } from 'effect';
 import type { Todo } from 'src/features/todos/todos.svelte';
+
+export class StorageParseError extends Data.TaggedError('StorageParseError')<{
+	readonly cause: unknown;
+}> {}
+
+export class StorageWriteError extends Data.TaggedError('StorageWriteError')<{
+	readonly cause: unknown;
+}> {}
 
 const KEY = 'todos';
 

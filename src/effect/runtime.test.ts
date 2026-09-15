@@ -1,7 +1,7 @@
 import { Effect } from 'effect';
+import { EmptyTextError, TodoNotFoundError } from 'src/features/todos/todos.svelte';
 import { describe, expect, it } from 'vitest';
-import { EmptyTextError, TodoNotFoundError } from './errors';
-import { messageFor, run, runOk } from './runtime';
+import { run, runOk } from './runtime';
 
 describe('run', () => {
 	it('returns the success value', () => {
@@ -36,12 +36,5 @@ describe('runOk', () => {
 		});
 		expect(() => runOk(dies)).not.toThrow();
 		expect(runOk(dies)).toBe(false);
-	});
-});
-
-describe('messageFor', () => {
-	it('maps every tagged error to a non-empty message', () => {
-		expect(messageFor(new EmptyTextError())).not.toBe('');
-		expect(messageFor(new TodoNotFoundError({ id: 'x' }))).toContain('x');
 	});
 });

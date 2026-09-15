@@ -22,33 +22,43 @@
 	} from 'src/components/ui/alert-dialog/index.js';
 	import { cn } from 'src/utils.js';
 
-	const initialTodos = run(TodosService.load()) ?? [];
-	const store = createTodosStore(initialTodos);
+	const initialLoad = run(TodosService.load());
+	if (initialLoad === undefined) toast.error('Could not load saved todos');
+	const store = createTodosStore(initialLoad ?? []);
 
 	let text = $state('');
 	let clearOpen = $state(false);
 
 	function persist() {
-		run(TodosService.save(store.todos));
+		if (!runOk(TodosService.save(store.todos))) toast.error('Failed to save todos to local storage');
 	}
 
 	function handleAdd() {
 		const todo = run(store.add(text));
-		if (!todo) return;
+		if (!todo) {
+			toast.error('Todo text cannot be empty');
+			return;
+		}
 		text = '';
 		toast.success(`Added "${todo.text}"`);
 		persist();
 	}
 
 	function handleToggle(id: string) {
-		if (!runOk(store.toggle(id))) return;
+		if (!runOk(store.toggle(id))) {
+			toast.error('Could not update todo');
+			return;
+		}
 		const todo = store.todos.find((t: Todo) => t.id === id);
 		toast.success(todo?.done ? 'Marked as done' : 'Marked as active');
 		persist();
 	}
 
 	function handleRemove(id: string) {
-		if (!runOk(store.remove(id))) return;
+		if (!runOk(store.remove(id))) {
+			toast.error('Could not delete todo');
+			return;
+		}
 		toast.success('Todo deleted');
 		persist();
 	}
