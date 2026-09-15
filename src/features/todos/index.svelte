@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { toast } from 'svelte-sonner';
-	import { run, runOk } from 'src/effect';
+	import { run, runOk } from 'src/effect/runtime';
 	import { createTodosStore, type Todo } from 'src/features/todos/todos.svelte';
 	import { TodosService } from 'src/services/todos.service';
 	import { Card } from 'src/components/ui/card/index.js';
