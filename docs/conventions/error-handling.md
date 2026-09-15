@@ -70,6 +70,38 @@ export function run<A, E>(effect: Effect.Effect<A, E>): Result<A, E | Unexpected
 
 `Effect.runSyncExit` never throws, even for a defect or interrupt — it always resolves to an `Exit`. A typed failure has a real `E` in its `Cause`, found via `Cause.findErrorOption`; a defect or interrupt has no typed `E`, so `Option.getOrElse` falls back to wrapping the whole `Cause` in `UnexpectedError`. `UnexpectedError` is infrastructure, not a feature error — it belongs in `src/effect/`, not with the feature errors. Either way `run` returns, never throws.
 
+## `runAsync` — the async counterpart
+
+`runAsync` in `src/effect/runtime.ts` returns the same `Result`, resolved by the same three-way logic as `run` — both now build on one shared `toResult(exit)` helper instead of duplicating the branch. It wraps `Effect.runPromiseExit(effect, options)`, passing an optional `{ signal }` straight through. Never rejects — same guarantee as `run`, just async:
+
+```ts
+export async function runAsync<A, E>(
+  effect: Effect.Effect<A, E>,
+  options?: { readonly signal?: AbortSignal }
+): Promise<Result<A, E | UnexpectedError | InterruptedError>> {
+  return toResult(await Effect.runPromiseExit(effect, options));
+}
+```
+
+Failure resolution order, inside `toResult`:
+
+1. typed `E` found in the `Cause` (`Cause.findErrorOption`)
+2. `InterruptedError` — no typed `E`, but the cause has interrupts (`Cause.hasInterrupts`)
+3. `UnexpectedError` — no typed `E`, no interrupt: a defect, wraps the whole `Cause`
+
+**Why interruption is its own tag**: cancelling in-flight work on navigation is expected, not a failure. Without the distinct tag it collapses into `UnexpectedError`, and the UI toasts an error every time the user leaves the page. Call sites bail silently instead:
+
+```ts
+const res = await runAsync(SomeService.fetch(), { signal });
+if (!res.ok) {
+  if (res.error._tag === 'InterruptedError') return;
+  toast.error('Could not load');
+  return;
+}
+```
+
+`run` keeps the narrower `Result<A, E | UnexpectedError>` — a synchronous effect can't be interrupted from outside, so `InterruptedError` is unreachable there and deliberately kept out of its public signature.
+
 ## Reporting happens at the call site
 
 `run` doesn't know what a failure means, so it doesn't report anything — each call site in `src/features/todos/index.svelte` reports its own context-appropriate toast by checking `res.ok`:

@@ -62,6 +62,40 @@ onMount(() => {
 - `init()` seeds the store from loaded data on mount
 - `reset()` restores defaults on unmount (the `onMount` cleanup return, fired when the page's root component unmounts)
 
+## Async store methods
+
+- need a `pending = $state(false)` field, set true before the `await`, false after — same reasoning that put `text`/`clearOpen` in the store
+- the store owns cancellation: a private `AbortController` field, aborted and replaced in `reset()`, its `signal` passed to every `runAsync` call. This is the payoff of the existing `init()`/`reset()` lifecycle — unmount already calls `reset()`, so in-flight work dies with the page.
+- stale writes: overlapping calls that both assign the same field are last-writer-wins and wrong. The per-store abort covers unmount; for overlapping calls of the *same* method, guard with a monotonic request token.
+
+```ts
+class Store {
+	pending = $state(false);
+	#abort = new AbortController();
+
+	reset(): void {
+		this.#abort.abort();
+		this.#abort = new AbortController();
+		this.pending = false;
+		// ...plus the plain-literal field resets
+	}
+
+	async load(): Promise<void> {
+		this.pending = true;
+		const res = await runAsync(SomeService.fetch(), { signal: this.#abort.signal });
+		this.pending = false;
+		if (!res.ok) {
+			if (res.error._tag === 'InterruptedError') return;
+			toast.error('Could not load');
+			return;
+		}
+		// assign state
+	}
+}
+```
+
+- the todos store doesn't use this yet — `localStorage` is synchronous, so it stays on `run`
+
 ## Gotchas
 
 - `Effect.gen(function* () {})` generators are **not** arrow functions, so `this` is not lexically bound inside them. Use `Effect.suspend(() => ...)` / `Effect.sync(() => ...)` arrows for store methods instead — never `const self = this`.
