@@ -7,11 +7,11 @@
 		"theme": "neutral"
 	},
 	"aliases": {
-		"lib": "src",
-		"utils": "src/utils",
-		"components": "src/components",
-		"ui": "src/components/ui",
-		"hooks": "src/hooks"
+		"lib": "#src",
+		"utils": "#src/utils",
+		"components": "#src/components",
+		"ui": "#src/components/ui",
+		"hooks": "#src/hooks"
 	},
 	"iconLibrary": "lucide",
 	"registry": "https://shadcn-svelte.com/registry"

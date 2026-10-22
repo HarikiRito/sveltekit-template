@@ -1,4 +1,3 @@
-import path from 'node:path';
 import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 import tailwindcss from '@tailwindcss/vite';
@@ -13,10 +12,7 @@ export default defineConfig({
 				runes: ({ filename }: { filename: string }) =>
 					filename.split(/[/\\]/).includes('node_modules') ? undefined : true
 			},
-			adapter: adapter({ fallback: '200.html' }),
-			alias: {
-				src: path.resolve('./src')
-			}
+			adapter: adapter({ fallback: '200.html' })
 		})
 	],
 	test: {

@@ -27,7 +27,7 @@
 
 <script lang="ts">
 	import { Toggle as TogglePrimitive } from "bits-ui";
-	import { cn } from "src/utils.js";
+	import { cn } from "#src/utils.js";
 
 	let {
 		ref = $bindable(null),

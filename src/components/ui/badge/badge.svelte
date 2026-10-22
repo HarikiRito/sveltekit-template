@@ -22,7 +22,7 @@
 </script>
 
 <script lang="ts">
-	import { cn, type WithElementRef } from "src/utils.js";
+	import { cn, type WithElementRef } from "#src/utils.js";
 	import type { HTMLAnchorAttributes } from "svelte/elements";
 
 	let {

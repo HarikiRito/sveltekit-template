@@ -6,7 +6,7 @@ Back to [`../README.md`](../README.md).
 
 ## Conventions
 
-- [`structure.md`](conventions/structure.md) — folder layout, path alias, feature-folder pattern, routes as delegation shells
+- [`structure.md`](conventions/structure.md) — folder layout, `#src` subpath import, feature-folder pattern, routes as delegation shells
 - [`naming.md`](conventions/naming.md) — file casing rules and the `index.svelte` exception
 - [`styling.md`](conventions/styling.md) — Tailwind v4 CSS-first setup, shadcn design tokens, dark mode, `cn()`
 - [`components.md`](conventions/components.md) — adding shadcn-svelte components, the `App*` wrapper convention, installed component list

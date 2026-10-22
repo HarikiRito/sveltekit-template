@@ -1,10 +1,10 @@
 <script lang="ts">
-	import 'src/app.css';
+	import '#src/app.css';
 	import { ModeWatcher } from 'mode-watcher';
 	import { page } from '$app/state';
-	import AppSonner from 'src/components/ui/sonner/AppSonner.svelte';
-	import AppThemeToggle from 'src/components/ui/AppThemeToggle.svelte';
-	import { cn } from 'src/utils.js';
+	import AppSonner from '#src/components/ui/sonner/AppSonner.svelte';
+	import AppThemeToggle from '#src/components/ui/AppThemeToggle.svelte';
+	import { cn } from '#src/utils.js';
 
 	// lucide has no brand/logo icons — inline mark for the GitHub link
 	const githubMarkPath =

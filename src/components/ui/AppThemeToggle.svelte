@@ -2,7 +2,7 @@
 	import { toggleMode } from 'mode-watcher';
 	import SunIcon from '@lucide/svelte/icons/sun';
 	import MoonIcon from '@lucide/svelte/icons/moon';
-	import { Button } from 'src/components/ui/button/index.js';
+	import { Button } from '#src/components/ui/button/index.js';
 </script>
 
 <Button
