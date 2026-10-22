@@ -2,7 +2,7 @@
 
 Effect-based typed error handling. See [../index.md](../index.md) for the full convention list and [state.md](state.md) for the store pattern that returns these effects.
 
-- **`effect@4.0.0-rc.115`**, exact pin — v4 is prerelease-only (no stable release yet); pin exactly, never `^`/`~`, and don't upgrade without re-checking the rc API
+- **`effect@4.0.5`**, exact pin — pin exactly, never `^`/`~`
 - No `try`/`catch` anywhere in `src/` — synchronous throwing APIs (`JSON.parse`, `localStorage`) are wrapped with `Effect.try`; services and stores return `Effect` values instead of throwing
 - Tagged errors live with the module that raises them, built with `Data.TaggedError` — not in a shared registry. `src/effect/` doesn't know any app error type exists.
 
