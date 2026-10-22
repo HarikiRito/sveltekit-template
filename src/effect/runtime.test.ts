@@ -1,6 +1,6 @@
 import { Effect } from 'effect';
-import { EmptyTextError, TodoNotFoundError } from 'src/features/todos/todos.svelte';
 import { describe, expect, it } from 'vitest';
+import { EmptyTextError, TodoNotFoundError } from '#src/features/todos/todos.svelte.js';
 import { run, runAsync, UnexpectedError } from './runtime';
 
 describe('run', () => {

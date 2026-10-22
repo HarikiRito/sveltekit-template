@@ -1,6 +1,6 @@
 <script lang="ts">
 	import GallerySection from './gallery-section.svelte';
-	import { Separator } from 'src/components/ui/separator/index.js';
+	import { Separator } from '#src/components/ui/separator/index.js';
 	import {
 		Sheet,
 		SheetTrigger,
@@ -10,11 +10,11 @@
 		SheetDescription,
 		SheetFooter,
 		SheetClose
-	} from 'src/components/ui/sheet/index.js';
-	import { Skeleton } from 'src/components/ui/skeleton/index.js';
-	import { Button } from 'src/components/ui/button/index.js';
+	} from '#src/components/ui/sheet/index.js';
+	import { Skeleton } from '#src/components/ui/skeleton/index.js';
+	import { Button } from '#src/components/ui/button/index.js';
 	import { toast } from 'svelte-sonner';
-	import { Switch } from 'src/components/ui/switch/index.js';
+	import { Switch } from '#src/components/ui/switch/index.js';
 	import {
 		Table,
 		TableHeader,
@@ -22,16 +22,16 @@
 		TableRow,
 		TableHead,
 		TableCell
-	} from 'src/components/ui/table/index.js';
-	import { Tabs, TabsList, TabsTrigger, TabsContent } from 'src/components/ui/tabs/index.js';
-	import { Textarea } from 'src/components/ui/textarea/index.js';
-	import { Toggle } from 'src/components/ui/toggle/index.js';
+	} from '#src/components/ui/table/index.js';
+	import { Tabs, TabsList, TabsTrigger, TabsContent } from '#src/components/ui/tabs/index.js';
+	import { Textarea } from '#src/components/ui/textarea/index.js';
+	import { Toggle } from '#src/components/ui/toggle/index.js';
 	import {
 		Tooltip,
 		TooltipTrigger,
 		TooltipContent,
 		TooltipProvider
-	} from 'src/components/ui/tooltip/index.js';
+	} from '#src/components/ui/tooltip/index.js';
 
 	let sheetOpen = $state(false);
 	let showCompleted = $state(true);

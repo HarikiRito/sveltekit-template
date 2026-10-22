@@ -1,6 +1,6 @@
 <script lang="ts">
 	import GallerySection from './gallery-section.svelte';
-	import { Button } from 'src/components/ui/button/index.js';
+	import { Button } from '#src/components/ui/button/index.js';
 	import {
 		Dialog,
 		DialogTrigger,
@@ -10,7 +10,7 @@
 		DialogDescription,
 		DialogFooter,
 		DialogClose
-	} from 'src/components/ui/dialog/index.js';
+	} from '#src/components/ui/dialog/index.js';
 	import {
 		DropdownMenu,
 		DropdownMenuTrigger,
@@ -18,27 +18,27 @@
 		DropdownMenuLabel,
 		DropdownMenuSeparator,
 		DropdownMenuItem
-	} from 'src/components/ui/dropdown-menu/index.js';
-	import { Input } from 'src/components/ui/input/index.js';
-	import { Kbd } from 'src/components/ui/kbd/index.js';
-	import { Label } from 'src/components/ui/label/index.js';
+	} from '#src/components/ui/dropdown-menu/index.js';
+	import { Input } from '#src/components/ui/input/index.js';
+	import { Kbd } from '#src/components/ui/kbd/index.js';
+	import { Label } from '#src/components/ui/label/index.js';
 	import {
 		Popover,
 		PopoverTrigger,
 		PopoverContent,
 		PopoverTitle,
 		PopoverDescription
-	} from 'src/components/ui/popover/index.js';
-	import { Progress } from 'src/components/ui/progress/index.js';
-	import { RadioGroup, RadioGroupItem } from 'src/components/ui/radio-group/index.js';
-	import { ScrollArea } from 'src/components/ui/scroll-area/index.js';
+	} from '#src/components/ui/popover/index.js';
+	import { Progress } from '#src/components/ui/progress/index.js';
+	import { RadioGroup, RadioGroupItem } from '#src/components/ui/radio-group/index.js';
+	import { ScrollArea } from '#src/components/ui/scroll-area/index.js';
 	import {
 		Select,
 		SelectTrigger,
 		SelectContent,
 		SelectItem,
 		SelectValue
-	} from 'src/components/ui/select/index.js';
+	} from '#src/components/ui/select/index.js';
 	import { toast } from 'svelte-sonner';
 
 	let dialogOpen = $state(false);

@@ -1,6 +1,6 @@
 import { Cause, Effect, Exit, Option } from 'effect';
-import type { Todo } from 'src/features/todos/todos.svelte';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import type { Todo } from '#src/features/todos/todos.svelte.js';
 import { TodosService } from './todos.service';
 
 function failureOf<A, E>(exit: Exit.Exit<A, E>): E {

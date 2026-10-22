@@ -23,7 +23,7 @@ Wrapping a primitive in an `App*` component is **opt-in** — only add one where
 <!-- src/components/ui/AppBadge.svelte -->
 <script lang="ts">
   import { Badge } from 'src/components/ui/badge/index.js';
-  import { cn } from 'src/utils.js';
+  import { cn } from '#src/utils.js';
   let { class: className, ...rest } = $props();
 </script>
 <Badge class={cn(className)} {...rest} />

@@ -1,7 +1,7 @@
 <script lang="ts">
-	import { Button } from 'src/components/ui/button/index.js';
-	import { Card, CardHeader, CardTitle, CardDescription } from 'src/components/ui/card/index.js';
-	import { Badge } from 'src/components/ui/badge/index.js';
+	import { Button } from '#src/components/ui/button/index.js';
+	import { Card, CardHeader, CardTitle, CardDescription } from '#src/components/ui/card/index.js';
+	import { Badge } from '#src/components/ui/badge/index.js';
 
 	const stack = [
 		'Svelte 5 runes',

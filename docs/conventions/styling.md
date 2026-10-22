@@ -12,10 +12,10 @@ Tailwind CSS v4 CSS-first setup and shadcn design tokens. See [components.md](co
   - `@theme inline { --color-* mappings, --radius-sm/md/lg/xl }` — maps CSS vars to Tailwind utilities
   - `@layer base { * { @apply border-border outline-ring/50; } body { @apply bg-background text-foreground; } }`
 - **Dark mode** — toggled via `mode-watcher`, which sets/removes the `.dark` class; no manual class toggling in feature code
-- **`cn()`** — import from `src/utils.js` (not the `cn` package directly) for every conditional/merged Tailwind class list:
+- **`cn()`** — import from `#src/utils.js` (not the `cn` package directly) for every conditional/merged Tailwind class list:
 
 ```ts
-import { cn } from 'src/utils.js';
+import { cn } from '#src/utils.js';
 
 const classes = cn('px-2 py-1', isActive && 'bg-primary', className);
 ```

@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { toast } from 'svelte-sonner';
-	import { run } from 'src/effect/runtime';
-	import { TodosStore, type Todo } from 'src/features/todos/todos.svelte';
-	import { TodosService } from 'src/services/todos.service';
-	import { Card } from 'src/components/ui/card/index.js';
-	import { Badge } from 'src/components/ui/badge/index.js';
-	import { Separator } from 'src/components/ui/separator/index.js';
-	import { Label } from 'src/components/ui/label/index.js';
-	import { Input } from 'src/components/ui/input/index.js';
-	import { Button } from 'src/components/ui/button/index.js';
-	import { Checkbox } from 'src/components/ui/checkbox/index.js';
+	import { run } from '#src/effect/runtime.js';
+	import { TodosStore, type Todo } from '#src/features/todos/todos.svelte.js';
+	import { TodosService } from '#src/services/todos.service.js';
+	import { Card } from '#src/components/ui/card/index.js';
+	import { Badge } from '#src/components/ui/badge/index.js';
+	import { Separator } from '#src/components/ui/separator/index.js';
+	import { Label } from '#src/components/ui/label/index.js';
+	import { Input } from '#src/components/ui/input/index.js';
+	import { Button } from '#src/components/ui/button/index.js';
+	import { Checkbox } from '#src/components/ui/checkbox/index.js';
 	import {
 		AlertDialog,
 		AlertDialogAction,
@@ -20,8 +20,8 @@
 		AlertDialogFooter,
 		AlertDialogHeader,
 		AlertDialogTitle
-	} from 'src/components/ui/alert-dialog/index.js';
-	import { cn } from 'src/utils.js';
+	} from '#src/components/ui/alert-dialog/index.js';
+	import { cn } from '#src/utils.js';
 
 	onMount(() => {
 		const res = run(TodosService.load());

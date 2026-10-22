@@ -5,8 +5,8 @@
 		AccordionItem,
 		AccordionTrigger,
 		AccordionContent
-	} from 'src/components/ui/accordion/index.js';
-	import { Alert, AlertTitle, AlertDescription } from 'src/components/ui/alert/index.js';
+	} from '#src/components/ui/accordion/index.js';
+	import { Alert, AlertTitle, AlertDescription } from '#src/components/ui/alert/index.js';
 	import {
 		AlertDialog,
 		AlertDialogTrigger,
@@ -17,9 +17,9 @@
 		AlertDialogFooter,
 		AlertDialogCancel,
 		AlertDialogAction
-	} from 'src/components/ui/alert-dialog/index.js';
-	import { Avatar, AvatarImage, AvatarFallback } from 'src/components/ui/avatar/index.js';
-	import { Badge } from 'src/components/ui/badge/index.js';
+	} from '#src/components/ui/alert-dialog/index.js';
+	import { Avatar, AvatarImage, AvatarFallback } from '#src/components/ui/avatar/index.js';
+	import { Badge } from '#src/components/ui/badge/index.js';
 	import {
 		Breadcrumb,
 		BreadcrumbList,
@@ -27,14 +27,14 @@
 		BreadcrumbLink,
 		BreadcrumbPage,
 		BreadcrumbSeparator
-	} from 'src/components/ui/breadcrumb/index.js';
-	import { Button } from 'src/components/ui/button/index.js';
+	} from '#src/components/ui/breadcrumb/index.js';
+	import { Button } from '#src/components/ui/button/index.js';
 	import {
 		ButtonGroup,
 		ButtonGroupSeparator
-	} from 'src/components/ui/button-group/index.js';
-	import { Card, CardHeader, CardTitle, CardDescription, CardContent } from 'src/components/ui/card/index.js';
-	import { Checkbox } from 'src/components/ui/checkbox/index.js';
+	} from '#src/components/ui/button-group/index.js';
+	import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '#src/components/ui/card/index.js';
+	import { Checkbox } from '#src/components/ui/checkbox/index.js';
 	import InfoIcon from '@lucide/svelte/icons/info';
 
 	let accordionValue = $state('item-1');

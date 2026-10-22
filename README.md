@@ -5,11 +5,11 @@ A lean, reusable SvelteKit SPA template. Ships as an SPA by default with a docum
 ## Stack
 
 - **Svelte 5** — runes-based reactive state
-- **SvelteKit 2** — SPA via `adapter-static`
+- **SvelteKit 3** — SPA via `adapter-static`
 - **Tailwind CSS v4** — CSS-first config (`@import "tailwindcss"`, no `tailwind.config.js`)
 - **shadcn-svelte** — neutral default theme, curated component set
 - **cn** — official shadcn class-merge package (replaces clsx + tailwind-merge)
-- **Effect v4** (`effect@4.0.0-rc.115`) — typed error handling, zero `try-catch` in `src/`
+- **Effect v4** (`effect@4.0.5`) — typed error handling, zero `try-catch` in `src/`
 - **Biome + ESLint/Prettier hybrid** — Biome for TS/JS/JSON/CSS, ESLint + prettier-plugin-svelte for `.svelte`
 - **Vitest** — unit tests for stores and services
 
